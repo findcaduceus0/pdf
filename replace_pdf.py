@@ -22,11 +22,11 @@ def replace_in_pdf(path: str, old: bytes, new: bytes) -> int:
 
         dict_start = data.rfind(b'<<', 0, stream_pos)
         if dict_start == -1:
-            search_pos = endstream_pos
+            search_pos = endstream_pos + len(b'endstream')
             continue
         dict_bytes = data[dict_start:stream_pos]
         if b'/FlateDecode' not in dict_bytes:
-            search_pos = endstream_pos
+            search_pos = endstream_pos + len(b'endstream')
             continue
 
         start = stream_pos + len(b'stream')
@@ -45,11 +45,11 @@ def replace_in_pdf(path: str, old: bytes, new: bytes) -> int:
         try:
             decompressed = zlib.decompress(comp)
         except Exception:
-            search_pos = endstream_pos
+            search_pos = endstream_pos + len(b'endstream')
             continue
 
         if old not in decompressed:
-            search_pos = endstream_pos
+            search_pos = endstream_pos + len(b'endstream')
             continue
 
         modified = decompressed.replace(old, new, 1)
@@ -76,7 +76,7 @@ def replace_in_pdf(path: str, old: bytes, new: bytes) -> int:
 
         data = data[:start] + recompressed + data[end:]
         changed = True
-        search_pos = endstream_pos
+        search_pos = endstream_pos + len(b'endstream')
 
     if not changed:
         sys.stderr.write('String not found\n')
